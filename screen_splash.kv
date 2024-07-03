@@ -1,0 +1,52 @@
+#:kivy 2.1.0
+
+<ScreenSplash>:
+    MDBoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+
+        MDLabel:
+            text: 'PIPE BENDING CNC MACHINE'
+            halign: 'center'
+            valign: 'middle'
+            font_style: 'H4'
+            size_hint_y: 0.2
+
+        MDBoxLayout:
+            orientation: 'horizontal'
+            spacing: 30
+            padding: 50
+            size_hint_y: 0.2
+
+            Image:
+                id: logo
+                source:'asset/logo_rafindo.png'
+                allow_stretch: True
+            
+            Image:
+                id: logo
+                source:'asset/logo_polman.png'
+                allow_stretch: True
+
+        MDProgressBar:
+            id: progress_bar
+            padding: 100
+            size_hint_y: 0.02
+            max: 100
+            value: 1
+
+        MDLabel:
+            id: progress_bar_label
+            text: 'Loading.. [0 %]'
+            halign: 'center'
+            valign: 'middle'
+            font_style: 'H5'
+            size_hint_y: 0.1
+
+        MDLabel:
+            text: 'Developed by Polman Bandung & Rafindo Raya, Copyrights @2024'
+            halign: 'center'
+            valign: 'middle'
+            font_style: 'H6'
+            size_hint_y: 0.1

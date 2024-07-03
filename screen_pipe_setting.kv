@@ -1,0 +1,210 @@
+#:kivy 2.1.0
+
+<ScreenPipeSetting>:
+    MDBoxLayout:
+        orientation: "vertical"
+
+		# header layout
+        MDBoxLayout:
+            id: header_layout
+            orientation: "horizontal"
+            padding: 20
+			size_hint_y: 0.1
+                    
+            Image:
+                id: logo
+                source:'asset/logo_rafindo.png'
+                size_hint_x: 0.25
+                allow_stretch: True 
+
+			MDBoxLayout:
+				orientation: "vertical"
+
+				MDLabel:
+					id: subtitle            
+					text: "PIPE BENDING CNC MACHINE"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H5'
+
+				MDLabel:
+					id: comm_status
+					text: "Status:"
+					halign: "center"
+					valign: "middle"
+                  
+            Image:
+                id: logo
+                source:'asset/logo_polman.png'
+                size_hint_x: 0.25
+                allow_stretch: True  
+
+		# title layout
+		MDBoxLayout:
+			id: layout_title
+			orientation: "horizontal"
+			size_hint_y: 0.05
+
+			MDIconButton:
+				id: bt_menu
+				icon: "menu"
+				size_hint_x: 0.2
+				on_press: root.screen_main_menu()
+
+			MDLabel:
+				text: "PIPE SETTING"
+				halign: "center"
+				valign: "middle"
+				font_style: 'H6'
+
+			MDIconButton:
+				id: bt_shutdown
+				icon: "power"
+				size_hint_x: 0.2
+				on_press: root.exec_shutdown()
+
+		# setting layout
+		MDBoxLayout:
+			id: layout_pipe_setting
+			orientation: "vertical"
+			size_hint_y: 0.8
+			padding:20
+			spacing:20
+
+			# illustration pipe
+			MDBoxLayout:
+				orientation: "horizontal"
+				size_hint_y: 0.5
+				padding: 40
+
+				MDBoxLayout:
+					id: pipe_illustration
+					size_hint_x: 0.8
+					
+				MDGridLayout:
+					cols:1
+					spacing:20
+					size_hint_x: 0.2
+
+					MDFillRoundFlatIconButton:
+						text: "TOP"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph(90, -90, 0)
+
+					MDFillRoundFlatIconButton:
+						text: "FRONT"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph(0, 0, 0)
+
+					MDFillRoundFlatIconButton:
+						text: "SIDE"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph(0, -90, 0)
+
+					MDFillRoundFlatIconButton:
+						text: "ISOMETIC"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph()
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-up-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(0)
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-down-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(1)
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-left-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(2)
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-right-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(3)
+
+			MDGridLayout:
+				cols:2
+				spacing:20
+				size_hint_y: 0.5
+				row_default_height: 40
+				row_force_default: True
+
+				MDLabel:
+					text: "Length"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_pipe_length
+					hint_text: "Input Length (mm)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Diameter"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_pipe_diameter
+					hint_text: "Input Diameter (mm)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Thickness"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_pipe_thickness
+					hint_text: "Input Thickness (mm)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()		
+
+		# MDRectangleFlatIconButton: navigation operation
+		MDBoxLayout:
+			orientation: "horizontal"
+			size_hint_y: 0.05
+			padding:20
+			spacing:20
+
+			MDFillRoundFlatIconButton:
+				id: bt_save
+				icon: "floppy"
+				text: "SAVE"
+				font_style: 'H6'
+				size_hint_x: 0.5
+				on_press: root.save()
+
+			MDFillRoundFlatIconButton:
+				id: bt_reset
+				icon: "folder"
+				text: "LOAD"
+				font_style: 'H6'
+				size_hint_x: 0.5
+				on_press: root.load()			
+
+
+
+
+
+
+
+

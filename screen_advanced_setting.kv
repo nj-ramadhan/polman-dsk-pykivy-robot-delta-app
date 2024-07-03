@@ -1,0 +1,264 @@
+#:kivy 2.1.0
+
+<ScreenAdvancedSetting>:
+    MDBoxLayout:
+        orientation: "vertical"
+		# header layout
+        MDBoxLayout:
+            id: header_layout
+            orientation: "horizontal"
+            padding: 20
+			size_hint_y: 0.1
+                    
+            Image:
+                id: logo
+                source:'asset/logo_rafindo.png'
+                size_hint_x: 0.25
+                allow_stretch: True 
+
+			MDBoxLayout:
+				orientation: "vertical"
+
+				MDLabel:
+					id: subtitle            
+					text: "PIPE BENDING CNC MACHINE"
+					halign: "center"
+					valign: "middle"
+					font_style: 'H5'
+
+				MDLabel:
+					id: comm_status
+					text: "Status:"
+					halign: "center"
+					valign: "middle"
+                  
+            Image:
+                id: logo
+                source:'asset/logo_polman.png'
+                size_hint_x: 0.25
+                allow_stretch: True  
+
+		# title layout
+		MDBoxLayout:
+			id: layout_title
+			orientation: "horizontal"
+			size_hint_y: 0.05
+
+			MDIconButton:
+				id: bt_menu
+				icon: "menu"
+				size_hint_x: 0.2
+				on_press: root.screen_main_menu()
+
+			MDLabel:
+				text: "ADVANCED SETTING"
+				halign: "center"
+				valign: "middle"
+				font_style: 'H6'
+
+			MDIconButton:
+				id: bt_shutdown
+				icon: "power"
+				size_hint_x: 0.2
+				on_press: root.exec_shutdown()            
+		
+		# setting layout
+		MDScrollView:
+			id: layout_advanced_setting
+			size_hint_y: 0.80
+
+			MDGridLayout:
+				cols:2
+				padding:20
+				size_hint_y: None
+				height: self.minimum_height
+				width: self.minimum_width
+
+				MDLabel:
+					text: "Pipe Head Pos"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_pipe_head
+					hint_text: "Input Pipe Head Pos (mm)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Start Mode"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_start_mode
+					hint_text: "Input Start Mode"
+					font_style: 'Body1'
+					input_filter: 'int'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Calculate First Line Segment"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_first_line
+					hint_text: "Input First Line Segment"
+					font_style: 'Body1'
+					input_filter: 'int'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "When Job Has Finished"
+					font_style: 'Body1'					
+
+				MDTextField:
+					id: input_advanced_finish_job
+					hint_text: "Input Action When Job Has Finished"
+					font_style: 'Body1'
+					input_filter: 'int'
+					on_text_validate: root.update()								
+
+				MDLabel:
+					text: "Pipe Receive Pos (X-axis)"
+					font_style: 'Body1'			
+
+				MDTextField:
+					id: input_advanced_receive_pos_x
+					hint_text: "Input Pipe Receive Pos X-axis (mm)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()							
+
+				MDLabel:
+					text: "Pipe Receive Pos (B-axis)"
+					font_style: 'Body1'			
+
+				MDTextField:
+					id: input_advanced_receive_pos_b
+					hint_text: "Input Receive Pos B-axis (mm)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()					
+
+				MDLabel:
+					text: "Production Quantity"
+					font_style: 'Body1'			
+
+				MDTextField:
+					id: input_advanced_prod_qty
+					hint_text: "Input Production Quantity"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()		
+
+
+				MDLabel:
+					text: "Pressure Die Semi Clamp Time"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_press_semiclamp_time
+					hint_text: "Input Pressure Die Semi Clamp Time (sec)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Pressure Die Semi Open Time"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_press_semiopen_time
+					hint_text: "Input Pressure Die Semi Open Time (sec)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Clamp Die Semi Clamp Time"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_clamp_semiclamp_time
+					hint_text: "Input Clamp Die Semi Clamp Time (sec)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Spring Back Angle (20)"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_springback_20
+					hint_text: "Input Spring Back Angle 20 (degree)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Spring Back Angle (120)"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_springback_120
+					hint_text: "Input Spring Back Angle 120 (degree)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()
+
+				MDLabel:
+					text: "Max Bending Angle"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_max_bend
+					hint_text: "Input Max Bending Angle (degree)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()	
+
+				MDLabel:
+					text: "Pressure Die Start Angle"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_press_start_angle
+					hint_text: "Input Pressure Die Start Angle (degree)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()	
+
+				MDLabel:
+					text: "Pressure Die Stop Angle"
+					font_style: 'Body1'
+
+				MDTextField:
+					id: input_advanced_press_stop_angle
+					hint_text: "Input Pressure Die Stop Angle (degree)"
+					font_style: 'Body1'
+					input_filter: 'float'
+					on_text_validate: root.update()	
+
+		# MDRectangleFlatIconButton: navigation operation
+		MDBoxLayout:
+			orientation: "horizontal"
+			size_hint_y: 0.05
+			padding:20
+			spacing:20
+
+			MDFillRoundFlatIconButton:
+				id: bt_save
+				icon: "floppy"
+				text: "SAVE"
+				font_style: 'H6'
+				size_hint_x: 0.5
+				on_press: root.save()
+
+			MDFillRoundFlatIconButton:
+				id: bt_reset
+				icon: "folder"
+				text: "LOAD"
+				font_style: 'H6'
+				size_hint_x: 0.5
+				on_press: root.load()
