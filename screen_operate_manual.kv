@@ -12,8 +12,8 @@
 			size_hint_y: 0.1
                     
             Image:
-                id: logo
-                source:'asset/logo_rafindo.png'
+                id: logo_polman
+                source:'asset/logo_polman.png'
                 size_hint_x: 0.25
                 allow_stretch: True 
 
@@ -34,10 +34,10 @@
 					valign: "middle"
                   
             Image:
-                id: logo
-                source:'asset/logo_polman.png'
+                id: logo_ae
+                source:'asset/logo_ae.png'
                 size_hint_x: 0.25
-                allow_stretch: True  
+                allow_stretch: True   
 
 		# title layout
 		MDBoxLayout:
@@ -69,27 +69,106 @@
 			orientation: "vertical"
 			size_hint_y: 0.80
 			padding:20
-			spacing:40
+			spacing:10
 
-			# machine illustration
-			Image:
-				id: machine
-				source:'asset/machine_operation.png'
-				allow_stretch: True
-				size_hint_y: 0.4
+			# delta robot illustration
+			MDBoxLayout:
+				orientation: "horizontal"
+				size_hint_y: 0.60
 
-			MDFillRoundFlatButton:
-				id: bt_mode
-				text: "MODE MANUAL"
-				font_style: 'Button'
-				size_hint_x: 1
-				size_hint_y: 0.02
-				on_press: root.exec_mode()
+				MDBoxLayout:
+					id: delta_robot_illustration
+					
+				MDGridLayout:
+					cols:1
+					spacing:10
+					size_hint_x: 0.2
+
+					MDFillRoundFlatIconButton:
+						text: "TOP"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph(90, -90, 0)
+
+					MDFillRoundFlatIconButton:
+						text: "FRONT"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph(0, 0, 0)
+
+					MDFillRoundFlatIconButton:
+						text: "SIDE"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph(0, -90, 0)
+
+					MDFillRoundFlatIconButton:
+						text: "ISOMETIC"
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_graph()
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-up-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(0)
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-down-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(1)
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-left-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(2)
+
+					MDFillRoundFlatIconButton:
+						icon: "arrow-right-bold"
+						text: " "
+						font_style: 'Button'
+						size_hint_x: 0.5
+						on_press: root.update_view(3)
 
 			MDBoxLayout:
 				orientation: "horizontal"
-				size_hint_y: 0.48
+				size_hint_y: 0.05
 				spacing: 20
+				padding: 20
+
+				MDFillRoundFlatButton:
+					id: bt_mode
+					text: "MODE MANUAL"
+					font_style: 'Button'
+					size_hint_x: 0.3
+					on_press: root.exec_mode()
+
+				MDFillRoundFlatButton:
+					id: bt_origin
+					text: "ORIGIN"
+					font_style: 'Button'
+					size_hint_x: 0.3
+					on_press: root.exec_origin()
+					on_release: root.end_origin()
+
+				MDFillRoundFlatButton:
+					id: bt_reset
+					text: "RESET"
+					font_style: 'Button'
+					size_hint_x: 0.3
+					on_press: root.exec_reset()
+					on_release: root.end_reset()
+
+			MDBoxLayout:
+				orientation: "horizontal"
+				size_hint_y: 0.39
+				spacing: 10
 				padding: 20
 
 				MDBoxLayout:
@@ -109,271 +188,206 @@
 					MDGridLayout:
 						cols:3
 						spacing:10
-						size_hint_y: 0.03
-
-						MDFillRoundFlatIconButton:
-							id: lp_clamp_close
-							text: "CLAMP CLOSE"
-							font_style: 'Button'
-							size_hint_x: 0.3
-					
-						MDFillRoundFlatIconButton:
-							id: lp_bend_reducer
-							text: "BEND REDUCE"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_bend_origin
-							text: "BEND ORIGIN"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_press_open
-							text: "PRESS OPEN"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_table_up
-							text: "TABLE UP"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_table_down
-							text: "TABLE DOWN"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_feed_origin
-							text: "FEED ORIGIN"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_feed_reducer
-							text: "FEED REDUCER"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-						MDFillRoundFlatIconButton:
-							id: lp_chuck_close
-							text: "CHUCK CLOSE"
-							font_style: 'Button'
-							size_hint_x: 0.3
-
-					MDGridLayout:
-						cols:3
-						spacing:10
-						size_hint_y: 0.02
 
 						MDFillRoundFlatButton:
-							id: bt_clamp
-							text: "CLAMP"
+							id: bt_jog_x_p
+							text: "X +"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_clamp()
+							on_press: root.exec_jog_x_p()
+							on_release: root.end_jog_x()
 
 						MDFillRoundFlatButton:
-							id: bt_chuck
-							text: "CHUCK"
+							id: bt_jog_y_p
+							text: "Y +"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_chuck()
+							on_press: root.exec_jog_y_p()
+							on_release: root.end_jog_y()
 
 						MDFillRoundFlatButton:
-							id: bt_mandrell
-							text: "MANDRELL"
+							id: bt_jog_z_p
+							text: "Z +"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_mandrell()
+							on_press: root.exec_jog_z_p()
+							on_release: root.end_jog_z()
 
 						MDFillRoundFlatButton:
-							id: bt_press
-							text: "PRESS"
+							id: bt_jog_x_n
+							text: "X -"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_press()
+							on_press: root.exec_jog_x_n()
+							on_release: root.end_jog_x()
 
 						MDFillRoundFlatButton:
-							id: bt_table_up
-							text: "TABLE UP"
+							id: bt_jog_y_n
+							text: "Y -"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_table_up()
+							on_press: root.exec_jog_y_n()
+							on_release: root.end_jog_y()
 
 						MDFillRoundFlatButton:
-							id: bt_table_shift
-							text: "TABLE SHIFT"
+							id: bt_jog_z_n
+							text: "Z -"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_table_shift()
-
-					MDGridLayout:
-						cols:2
-						spacing:10
-						size_hint_y: 0.01
+							on_press: root.exec_jog_z_n()
+							on_release: root.end_jog_z()
 
 						MDFillRoundFlatButton:
-							id: bt_holder_top
-							text: "HOLDER TOP"
+							id: bt_jog_j1_p
+							text: "JOINT1 +"
 							font_style: 'Button'
-							size_hint_x: 0.5
-							on_press: root.exec_holder_top()
+							size_hint_x: 0.3
+							on_press: root.exec_jog_j1_p()
+							on_release: root.end_jog_j1()
 
 						MDFillRoundFlatButton:
-							id: bt_holder_bottom
-							text: "HOLDER BOTTOM"
+							id: bt_jog_j2_p
+							text: "JOINT2 +"
 							font_style: 'Button'
-							size_hint_x: 0.5
-							on_press: root.exec_holder_bottom()
-
-					MDGridLayout:
-						cols:3
-						spacing:10
-						size_hint_y: 0.03
+							size_hint_x: 0.3
+							on_press: root.exec_jog_j2_p()
+							on_release: root.end_jog_j2()
 
 						MDFillRoundFlatButton:
-							id: bt_jog_feed_p
-							text: "FEED +"
+							id: bt_jog_j3_p
+							text: "JOINT3 +"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_jog_feed_p()
-							on_release: root.end_jog_feed()
+							on_press: root.exec_jog_j3_p()
+							on_release: root.end_jog_j3()
 
 						MDFillRoundFlatButton:
-							id: bt_jog_bend_p
-							text: "BEND +"
+							id: bt_jog_j1_n
+							text: "JOINT1 -"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_jog_bend_p()
-							on_release: root.end_jog_bend()
+							on_press: root.exec_jog_j1_n()
+							on_release: root.end_jog_j1()
 
 						MDFillRoundFlatButton:
-							id: bt_jog_turn_p
-							text: "TURN +"
+							id: bt_jog_j2_n
+							text: "JOINT2 -"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_jog_turn_p()
-							on_release: root.end_jog_turn()
+							on_press: root.exec_jog_j2_n()
+							on_release: root.end_jog_j2()
 
 						MDFillRoundFlatButton:
-							id: bt_jog_feed_n
-							text: "FEED -"
+							id: bt_jog_j3_n
+							text: "JOINT3 -"
 							font_style: 'Button'
 							size_hint_x: 0.3
-							on_press: root.exec_jog_feed_n()
-							on_release: root.end_jog_feed()
-
-						MDFillRoundFlatButton:
-							id: bt_jog_bend_n
-							text: "BEND -"
-							font_style: 'Button'
-							size_hint_x: 0.3
-							on_press: root.exec_jog_bend_n()
-							on_release: root.end_jog_bend()
-
-						MDFillRoundFlatButton:
-							id: bt_jog_turn_n
-							text: "TURN -"
-							font_style: 'Button'
-							size_hint_x: 0.3
-							on_press: root.exec_jog_turn_n()
-							on_release: root.end_jog_turn()
-
-						MDFillRoundFlatIconButton:
-							id: bt_feed_speed
-							icon: "speedometer"
-							text: "1"
-							size_hint_x: 0.3
-							on_release: root.choice_speed("feed")
-
-						MDFillRoundFlatIconButton:
-							id: bt_bend_speed
-							icon: "speedometer"
-							text: "1"
-							size_hint_x: 0.3
-							on_release: root.choice_speed("bend")
-
-						MDFillRoundFlatIconButton:
-							id: bt_turn_speed
-							icon: "speedometer"
-							text: "1"
-							size_hint_x: 0.3
-							on_release: root.choice_speed("turn")
+							on_press: root.exec_jog_j3_n()
+							on_release: root.end_jog_j3()
 
 				MDBoxLayout:
-					orientation: "vertical"
+					orientation: "horizontal"
 					size_hint_x: 0.4
 					padding: 20
-					spacing: 20
+					spacing: 10
 
 					MDGridLayout:
 						cols:2
 						spacing:10
 
 						MDTextField:
-							id: input_operate_feed
-							hint_text: "Input Feed length (mm)"
+							id: input_operate_x
+							hint_text: "Input X coordinate (mm)"
 							font_style: 'Body1'
 							input_filter: 'float'
+							on_text_validate: root.update_cartesian()
 						
 						MDFillRoundFlatButton:
-							id: bt_operate_feed
+							id: bt_operate_x
 							text: "EXECUTE"
 							font_style: 'Button'
 							size_hint_x: 0.2
-							on_press: root.exec_operate_feed()
-							on_release: root.end_operate_feed()
+							on_press: root.exec_operate_x()
+							on_release: root.end_operate_x()
 
 						MDTextField:
-							id: input_operate_bend
-							hint_text: "Input Bend Angle (degree)"
+							id: input_operate_y
+							hint_text: "Input Y coordinate (degree)"
 							font_style: 'Body1'
 							input_filter: 'float'
+							on_text_validate: root.update_cartesian()
 						
 						MDFillRoundFlatButton:
-							id: bt_operate_bend
+							id: bt_operate_y
 							text: "EXECUTE"
 							font_style: 'Button'
 							size_hint_x: 0.2
-							on_press: root.exec_operate_bend()
-							on_release: root.end_operate_bend()
+							on_press: root.exec_operate_y()
+							on_release: root.end_operate_y()
 
 						MDTextField:
-							id: input_operate_turn
-							hint_text: "Input Turn Angle (degree)"
+							id: input_operate_z
+							hint_text: "Input Z coordinate (degree)"
 							font_style: 'Body1'
 							input_filter: 'float'
+							on_text_validate: root.update_cartesian()
 						
 						MDFillRoundFlatButton:
-							id: bt_operate_turn
+							id: bt_operate_z
 							text: "EXECUTE"
 							font_style: 'Button'
 							size_hint_x: 0.2
-							on_press: root.exec_operate_turn()
-							on_release: root.end_operate_turn()
+							on_press: root.exec_operate_z()
+							on_release: root.end_operate_z()
 
-					MDFillRoundFlatButton:
-						id: bt_origin
-						size_hint_y: 0.02
-						text: "ORIGIN"
-						font_style: 'Button'
-						size_hint_x: 1
-						on_press: root.exec_origin()
-						on_release: root.end_origin()
+					MDGridLayout:
+						cols:2
+						spacing:10
 
-					MDFillRoundFlatButton:
-						id: bt_reset
-						size_hint_y: 0.02
-						text: "RESET"
-						font_style: 'Button'
-						size_hint_x: 1
-						on_press: root.exec_reset()
-						on_release: root.end_reset()
+						MDTextField:
+							id: input_operate_j1
+							hint_text: "Input J1 angle"
+							font_style: 'Body1'
+							input_filter: 'float'
+							on_text_validate: root.update_joint()
+						
+						MDFillRoundFlatButton:
+							id: bt_operate_j1
+							text: "EXECUTE"
+							font_style: 'Button'
+							size_hint_x: 0.2
+							on_press: root.exec_operate_j1()
+							on_release: root.end_operate_j1()
+
+						MDTextField:
+							id: input_operate_j2
+							hint_text: "Input J2 angle"
+							font_style: 'Body1'
+							input_filter: 'float'
+							on_text_validate: root.update_joint()
+						
+						MDFillRoundFlatButton:
+							id: bt_operate_j2
+							text: "EXECUTE"
+							font_style: 'Button'
+							size_hint_x: 0.2
+							on_press: root.exec_operate_j2()
+							on_release: root.end_operate_j2()
+
+						MDTextField:
+							id: input_operate_j3
+							hint_text: "Input Z coordinate (degree)"
+							font_style: 'Body1'
+							input_filter: 'float'
+							on_text_validate: root.update_joint()
+						
+						MDFillRoundFlatButton:
+							id: bt_operate_j3
+							text: "EXECUTE"
+							font_style: 'Button'
+							size_hint_x: 0.2
+							on_press: root.exec_operate_j3()
+							on_release: root.end_operate_j3()
 
 		# MDRectangleFlatIconButton: navigation operation
 		MDBoxLayout:
