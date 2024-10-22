@@ -74,7 +74,7 @@
 			# delta robot illustration
 			MDBoxLayout:
 				orientation: "horizontal"
-				size_hint_y: 0.60
+				size_hint_y: 0.50
 
 				MDBoxLayout:
 					id: delta_robot_illustration
@@ -164,6 +164,66 @@
 					size_hint_x: 0.3
 					on_press: root.exec_reset()
 					on_release: root.end_reset()
+
+			MDGridLayout:
+				cols:6
+				spacing: 20, 10
+				padding: 20, 20
+				size_hint_y: 0.15
+
+				MDLabel:
+					text: "Joint 1 Realtime Angle"
+					font_style: 'Body1'
+
+				MDLabel:
+					id: lb_real_j1
+					text: "000.00"
+					font_style: 'H4'
+
+				MDLabel:
+					text: "Joint 2 Realtime Angle"
+					font_style: 'Body1'
+
+				MDLabel:
+					id: lb_real_j2
+					text: "000.00"
+					font_style: 'H4'
+
+				MDLabel:
+					text: "Joint 3 Realtime Angle"
+					font_style: 'Body1'
+
+				MDLabel:
+					id: lb_real_j3
+					text: "000.00"
+					font_style: 'H4'	
+
+				MDLabel:
+					text: "X Realtime Posiiton"
+					font_style: 'Body1'
+
+				MDLabel:
+					id: lb_real_x
+					text: "000.00"
+					font_style: 'H4'
+
+				MDLabel:
+					text: "Y Realtime Posiiton"
+					font_style: 'Body1'
+
+				MDLabel:
+					id: lb_real_y
+					text: "000.00"
+					font_style: 'H4'
+
+				MDLabel:
+					text: "Z Realtime Posiiton"
+					font_style: 'Body1'
+
+				MDLabel:
+					id: lb_real_z
+					text: "000.00"
+					font_style: 'H4'
 
 			MDBoxLayout:
 				orientation: "horizontal"
@@ -341,15 +401,22 @@
 							on_release: root.end_operate_z()
 
 					MDGridLayout:
-						cols:2
+						cols:3
 						spacing:10
+
+						MDTextField:
+							id: input_vel_j1
+							hint_text: "Input J1 velocity"
+							font_style: 'Body1'
+							input_filter: 'float'
+							on_text_validate: root.update_joint_vel()
 
 						MDTextField:
 							id: input_operate_j1
 							hint_text: "Input J1 angle"
 							font_style: 'Body1'
 							input_filter: 'float'
-							on_text_validate: root.update_joint()
+							on_text_validate: root.update_joint_pos()
 						
 						MDFillRoundFlatButton:
 							id: bt_operate_j1
@@ -360,11 +427,18 @@
 							on_release: root.end_operate_j1()
 
 						MDTextField:
+							id: input_vel_j2
+							hint_text: "Input J2 velocity"
+							font_style: 'Body1'
+							input_filter: 'float'
+							on_text_validate: root.update_joint_vel()
+
+						MDTextField:
 							id: input_operate_j2
 							hint_text: "Input J2 angle"
 							font_style: 'Body1'
 							input_filter: 'float'
-							on_text_validate: root.update_joint()
+							on_text_validate: root.update_joint_pos()
 						
 						MDFillRoundFlatButton:
 							id: bt_operate_j2
@@ -375,11 +449,18 @@
 							on_release: root.end_operate_j2()
 
 						MDTextField:
+							id: input_vel_j3
+							hint_text: "Input J3 velocity"
+							font_style: 'Body1'
+							input_filter: 'float'
+							on_text_validate: root.update_joint_vel()
+
+						MDTextField:
 							id: input_operate_j3
 							hint_text: "Input Z coordinate (degree)"
 							font_style: 'Body1'
 							input_filter: 'float'
-							on_text_validate: root.update_joint()
+							on_text_validate: root.update_joint_pos()
 						
 						MDFillRoundFlatButton:
 							id: bt_operate_j3

@@ -58,21 +58,32 @@ colors = {
 
 modbus_client = ModbusTcpClient('192.168.1.111')
 
-val_j1_pos = 0.
-val_j2_pos = 0.
-val_j3_pos = 0.
+PULSE_PER_REV = 1600
+GEAR_RATIO = 19
 
-val_j1_vel = 0.
-val_j2_vel = 0.
-val_j3_vel = 0.
+val_j1_pos_sv = 0.
+val_j2_pos_sv = 0.
+val_j3_pos_sv = 0.
 
-val_x_pos = 0.
-val_y_pos = 0.
-val_z_pos = -700.
+val_j1_pos_pv = 0.
+val_j2_pos_pv = 0.
+val_j3_pos_pv = 0.
 
-val_x_vel = 0.
-val_y_vel = 0.
-val_z_vel = 0.
+val_j1_vel = 30.
+val_j2_vel = 30.
+val_j3_vel = 30.
+
+val_x_pos_sv = 0.
+val_y_pos_sv = 0.
+val_z_pos_sv = -700.
+
+val_x_pos_pv = 0.
+val_y_pos_pv = 0.
+val_z_pos_pv = -700.
+
+val_x_vel = 10.
+val_y_vel = 10.
+val_z_vel = 10.
 
 val_x_step = np.zeros(10)
 val_y_step = np.zeros(10)
@@ -99,15 +110,6 @@ flag_run = False
 flag_alarm = False
 flag_reset = False
 
-flag_cylinder_press = False
-flag_cylinder_clamp = False
-flag_cylinder_chuck = False
-flag_cylinder_mandrell = False
-flag_cylinder_table_up = False
-flag_cylinder_table_shift = False
-flag_cylinder_holder_top = False
-flag_cylinder_holder_bottom = False
-
 flag_jog_enable = False
 flag_jog_req_x = False
 flag_jog_req_y = False
@@ -124,32 +126,22 @@ flag_operate_req_j3 = False
 
 flag_origin_req = False
 
-sens_clamp_close = False
-sens_y_reducer = False
-sens_y_origin = False
-sens_press_open = False
-sens_table_up = False
-sens_table_down = False
-sens_x_origin = False
-sens_x_reducer = False
-sens_chuck_close = False
-
 flag_seqs_arr = np.zeros(11)
 flag_steps_arr = np.zeros(11)
 
 # ## versi TA
-# servo_link_length = 295.0
-# parallel_link_length = 495.0
-# servo_displacement = 230.0
-# effector_displacement = 80.0
+# LINK_JOINT_LENGTH = 295.0
+# LINK_PARALLEL_LENGTH = 495.0
+# JOINT_DISPLACEMENT = 230.0
+# EFFECTOR_DISPLACEMENT = 80.0
 
 tool_offset = 20.0
 
 # versi Penelitian POLeLAND
-servo_link_length = 640.0
-parallel_link_length = 840.0
-servo_displacement = 225.7
-effector_displacement = 60.0
+LINK_JOINT_LENGTH = 640.0
+LINK_PARALLEL_LENGTH = 840.0
+JOINT_DISPLACEMENT = 225.7
+EFFECTOR_DISPLACEMENT = 60.0
 
 view_camera = np.array([45, 0, 0])
 
@@ -157,11 +149,11 @@ class DeltaPositionError(Exception):
     pass
 
 class SimulatedDeltaBot(object):
-    def __init__(self, servo_link_length, parallel_link_length, servo_displacement, effector_displacement):
-        self.e = effector_displacement
-        self.f = servo_displacement
-        self.re = parallel_link_length
-        self.rf = servo_link_length
+    def __init__(self, LINK_JOINT_LENGTH, LINK_PARALLEL_LENGTH, JOINT_DISPLACEMENT, EFFECTOR_DISPLACEMENT):
+        self.e = EFFECTOR_DISPLACEMENT
+        self.f = JOINT_DISPLACEMENT
+        self.re = LINK_PARALLEL_LENGTH
+        self.rf = LINK_JOINT_LENGTH
 
     def forward(self, theta1, theta2, theta3):
         """ 
@@ -260,7 +252,7 @@ class ScreenSplash(MDScreen):
         Clock.schedule_interval(self.regular_update_connection, 5)
         Clock.schedule_interval(self.regular_display, 1)
         Clock.schedule_interval(self.regular_highspeed_display, 0.5)
-        # Clock.schedule_interval(self.regular_get_data, 0.5)
+        Clock.schedule_interval(self.regular_get_data, 0.5)
 
     def regular_update_connection(self, dt):
         global flag_conn_stat
@@ -273,97 +265,36 @@ class ScreenSplash(MDScreen):
 
     def regular_get_data(self, dt):
         global flag_conn_stat, flag_mode, flag_run, flag_alarm, flag_reset, flag_jog_enable
-        global val_x_pv, val_y_pv, val_z_pv
-        global val_x_pos, val_y_pos, val_z_pos
-        global conf_x_speed_pv, conf_z_speed_pv, conf_y_speed_pv
-        global conf_x_speed_sv, conf_z_speed_sv, conf_y_speed_sv
-        global conf_bed_pos_pv, conf_bed_pos_sv
-        global sens_clamp_close, sens_y_reducer, sens_y_origin
-        global sens_press_open, sens_table_up, sens_table_down
-        global sens_x_origin, sens_x_reducer, sens_chuck_close
+        global val_x_pos_pv, val_y_pos_pv, val_z_pos_pv
+        global val_x_pos_sv, val_y_pos_sv, val_z_pos_sv
+        global val_j1_pos_pv, val_j2_pos_pv, val_j3_pos_pv
+        global val_j1_pos_sv, val_j2_pos_sv, val_j3_pos_sv
         global flag_seqs_arr, flag_steps_arr
 
         try:
             if flag_conn_stat:
                 modbus_client.connect()
                 operate_flags = modbus_client.read_coils(3072, 4, slave=1) #M0 - M3
-                # flag_mode, flag_run, flag_alarm, flag_reset = flags
-                jog_flags = modbus_client.read_coils(3092, 1, slave=1) #M20
-
-                x_registers = modbus_client.read_holding_registers(3512, 2, slave=1) #V3000 - V3001
-                y_registers = modbus_client.read_holding_registers(3542, 2, slave=1) #V3030 - V3031
-                z_registers = modbus_client.read_holding_registers(3572, 2, slave=1) #V3060 - V3061
-                x_speed_registers = modbus_client.read_holding_registers(3712, 2, slave=1) #V3200 - V3201
-                y_speed_registers = modbus_client.read_holding_registers(3742, 2, slave=1) #V3230 - V3231
-                z_speed_registers = modbus_client.read_holding_registers(3772, 2, slave=1) #V3260 - V3261
-                bed_pos_registers = modbus_client.read_coils(3372, 2, slave=1) #M300 - M301
-
-                sens_flags = modbus_client.read_coils(3183, 9, slave=1) #M111 - M119
-
-                seq_init_flags = modbus_client.read_coils(3133, 2, slave=1) #M61 - M62
-                seq_flags = modbus_client.read_coils(3143, 9, slave=1) #M71 - M79
-                step_flags = modbus_client.read_coils(3272, 11, slave=1) #M200 - M210
-
+                pulse_registers = modbus_client.read_holding_registers(17500, 18, slave=1) #SV92 - SV109
                 modbus_client.close()
 
-                flag_mode = operate_flags.bits[0]
-                flag_run = operate_flags.bits[1]
-                flag_alarm = operate_flags.bits[2]
-                flag_reset = operate_flags.bits[3]
+                val_j1_pos_pv = pulse_registers.registers[3] * 360 / PULSE_PER_REV / GEAR_RATIO
+                val_j2_pos_pv = pulse_registers.registers[9] * 360 / PULSE_PER_REV / GEAR_RATIO
+                val_j3_pos_pv = pulse_registers.registers[15] * 360 / PULSE_PER_REV / GEAR_RATIO
 
-                flag_jog_enable = jog_flags.bits[0]
+                bot = SimulatedDeltaBot(LINK_JOINT_LENGTH, LINK_PARALLEL_LENGTH,
+                                        JOINT_DISPLACEMENT, EFFECTOR_DISPLACEMENT)
+                servo_angle = np.array([val_j1_pos_pv, val_j2_pos_pv, val_j3_pos_pv], dtype=int)
 
-                val_x_pv = int(x_registers.registers[0]) if (int(x_registers.registers[0]) <= 32768) else (int(x_registers.registers[0]) - 65536) 
-                val_x_pos = int(x_registers.registers[1]) if (int(x_registers.registers[1]) <= 32768) else (int(x_registers.registers[1]) - 65536)
-                val_y_pv = int(y_registers.registers[0]) if (int(y_registers.registers[0]) <= 32768) else (int(y_registers.registers[0]) - 65536)
-                val_y_pos = int(y_registers.registers[1]) if (int(y_registers.registers[1]) <= 32768) else (int(y_registers.registers[1]) - 65536)
-                val_z_pv = int(z_registers.registers[0]) if (int(z_registers.registers[0]) <= 32768) else (int(z_registers.registers[0]) - 65536)
-                val_z_pos = int(z_registers.registers[1]) if (int(z_registers.registers[1]) <= 32768) else (int(z_registers.registers[1]) - 65536)
-
-                conf_x_speed_pv = int(x_speed_registers.registers[0]) if (int(x_speed_registers.registers[0]) <= 32768) else (int(x_speed_registers.registers[0]) - 65536)
-                conf_x_speed_sv = int(x_speed_registers.registers[1]) if (int(x_speed_registers.registers[1]) <= 32768) else (int(x_speed_registers.registers[1]) - 65536)
-                conf_y_speed_pv = int(y_speed_registers.registers[0]) if (int(y_speed_registers.registers[0]) <= 32768) else (int(x_speed_registers.registers[0]) - 65536)
-                conf_y_speed_sv = int(y_speed_registers.registers[1]) if (int(y_speed_registers.registers[1]) <= 32768) else (int(x_speed_registers.registers[1]) - 65536)
-                conf_z_speed_pv = int(z_speed_registers.registers[0]) if (int(z_speed_registers.registers[0]) <= 32768) else (int(x_speed_registers.registers[0]) - 65536)
-                conf_z_speed_sv = int(z_speed_registers.registers[1]) if (int(z_speed_registers.registers[1]) <= 32768) else (int(x_speed_registers.registers[1]) - 65536)
-                conf_bed_pos_pv = bed_pos_registers.bits[0]
-                conf_bed_pos_sv = bed_pos_registers.bits[1]
-
-                sens_clamp_close = sens_flags.bits[0]
-                sens_y_reducer = sens_flags.bits[1]
-                sens_y_origin = sens_flags.bits[2]
-                sens_press_open = sens_flags.bits[3]
-                sens_table_up = sens_flags.bits[4]
-                sens_table_down = sens_flags.bits[5]
-                sens_x_origin = sens_flags.bits[6]
-                sens_x_reducer = sens_flags.bits[7]
-                sens_chuck_close = sens_flags.bits[8]
-
-                flag_seqs_arr[0] = seq_init_flags.bits[0]
-                flag_seqs_arr[1] = seq_init_flags.bits[1]
-
-                flag_seqs_arr[2] = seq_flags.bits[0]
-                flag_seqs_arr[3] = seq_flags.bits[1]
-                flag_seqs_arr[4] = seq_flags.bits[2]
-                flag_seqs_arr[5] = seq_flags.bits[3]
-                flag_seqs_arr[6] = seq_flags.bits[4]
-                flag_seqs_arr[7] = seq_flags.bits[5]
-                flag_seqs_arr[8] = seq_flags.bits[6]
-                flag_seqs_arr[9] = seq_flags.bits[7]
-                flag_seqs_arr[10] = seq_flags.bits[8]
-
-                flag_steps_arr[0] = step_flags.bits[0]
-                flag_steps_arr[1] = step_flags.bits[1]
-                flag_steps_arr[2] = step_flags.bits[2]
-                flag_steps_arr[3] = step_flags.bits[3]
-                flag_steps_arr[4] = step_flags.bits[4]
-                flag_steps_arr[5] = step_flags.bits[5]
-                flag_steps_arr[6] = step_flags.bits[6]
-                flag_steps_arr[7] = step_flags.bits[7]
-                flag_steps_arr[8] = step_flags.bits[8]
-                flag_steps_arr[9] = step_flags.bits[9]
-                flag_steps_arr[10] = step_flags.bits[10]
+                fk_result = bot.forward(*servo_angle)
                 
+                val_x_pos_pv = fk_result[0]
+                val_y_pos_pv = fk_result[1]
+                val_z_pos_pv = fk_result[2]
+
+                flag_mode = operate_flags.bits[0]
+                flag_jog_enable = operate_flags.bits[1]
+
         except Exception as e:
             msg = f'{e}'
             toast(msg)  
@@ -371,6 +302,8 @@ class ScreenSplash(MDScreen):
     def regular_display(self, dt):
         global flag_conn_stat        
         global conf_bed_pos_step
+        global val_x_pos_pv, val_y_pos_pv, val_z_pos_pv
+        global val_j1_pos_pv, val_j2_pos_pv, val_j3_pos_pv
 
         try:
             screenMainMenu = self.screen_manager.get_screen('screen_main_menu')
@@ -397,6 +330,76 @@ class ScreenSplash(MDScreen):
                 screenCompile.ids.comm_status.text = "Status: Connected"
                 screenCompile.ids.comm_status.color = "#196BA5"  
 
+                if conf_bed_pos_step[0] != 1:
+                    screenCompile.ids.bt_bed_pos0.text = "DN"
+                    screenCompile.ids.bt_bed_pos0.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos0.text = "UP"
+                    screenCompile.ids.bt_bed_pos0.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[1] != 1:
+                    screenCompile.ids.bt_bed_pos1.text = "DN"
+                    screenCompile.ids.bt_bed_pos1.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos1.text = "UP"
+                    screenCompile.ids.bt_bed_pos1.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[2] != 1:
+                    screenCompile.ids.bt_bed_pos2.text = "DN"
+                    screenCompile.ids.bt_bed_pos2.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos2.text = "UP"
+                    screenCompile.ids.bt_bed_pos2.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[3] != 1:
+                    screenCompile.ids.bt_bed_pos3.text = "DN"
+                    screenCompile.ids.bt_bed_pos3.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos3.text = "UP"
+                    screenCompile.ids.bt_bed_pos3.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[4] != 1:
+                    screenCompile.ids.bt_bed_pos4.text = "DN"
+                    screenCompile.ids.bt_bed_pos4.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos4.text = "UP"
+                    screenCompile.ids.bt_bed_pos4.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[5] != 1:
+                    screenCompile.ids.bt_bed_pos5.text = "DN"
+                    screenCompile.ids.bt_bed_pos5.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos5.text = "UP"
+                    screenCompile.ids.bt_bed_pos5.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[6] != 1:
+                    screenCompile.ids.bt_bed_pos6.text = "DN"
+                    screenCompile.ids.bt_bed_pos6.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos6.text = "UP"
+                    screenCompile.ids.bt_bed_pos6.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[7] != 1:
+                    screenCompile.ids.bt_bed_pos7.text = "DN"
+                    screenCompile.ids.bt_bed_pos7.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos7.text = "UP"
+                    screenCompile.ids.bt_bed_pos7.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[8] != 1:
+                    screenCompile.ids.bt_bed_pos8.text = "DN"
+                    screenCompile.ids.bt_bed_pos8.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos8.text = "UP"
+                    screenCompile.ids.bt_bed_pos8.md_bg_color = "#ee2222"
+
+                if conf_bed_pos_step[9] != 1:
+                    screenCompile.ids.bt_bed_pos9.text = "DN"
+                    screenCompile.ids.bt_bed_pos9.md_bg_color = "#196BA5"
+                else:
+                    screenCompile.ids.bt_bed_pos9.text = "UP"
+                    screenCompile.ids.bt_bed_pos9.md_bg_color = "#ee2222"
+                    
             else:
                 screenMainMenu.ids.comm_status.text = "Status: Disconnected"
                 screenMainMenu.ids.comm_status.color = "#ee2222"
@@ -412,99 +415,23 @@ class ScreenSplash(MDScreen):
                 screenOperateAuto.ids.comm_status.color = "#ee2222"
                 screenCompile.ids.comm_status.text = "Status: Disconnected"
                 screenCompile.ids.comm_status.color = "#ee2222"
-                                  
-            if conf_bed_pos_step[0] != 1:
-                screenCompile.ids.bt_bed_pos0.text = "DN"
-                screenCompile.ids.bt_bed_pos0.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos0.text = "UP"
-                screenCompile.ids.bt_bed_pos0.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[1] != 1:
-                screenCompile.ids.bt_bed_pos1.text = "DN"
-                screenCompile.ids.bt_bed_pos1.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos1.text = "UP"
-                screenCompile.ids.bt_bed_pos1.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[2] != 1:
-                screenCompile.ids.bt_bed_pos2.text = "DN"
-                screenCompile.ids.bt_bed_pos2.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos2.text = "UP"
-                screenCompile.ids.bt_bed_pos2.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[3] != 1:
-                screenCompile.ids.bt_bed_pos3.text = "DN"
-                screenCompile.ids.bt_bed_pos3.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos3.text = "UP"
-                screenCompile.ids.bt_bed_pos3.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[4] != 1:
-                screenCompile.ids.bt_bed_pos4.text = "DN"
-                screenCompile.ids.bt_bed_pos4.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos4.text = "UP"
-                screenCompile.ids.bt_bed_pos4.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[5] != 1:
-                screenCompile.ids.bt_bed_pos5.text = "DN"
-                screenCompile.ids.bt_bed_pos5.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos5.text = "UP"
-                screenCompile.ids.bt_bed_pos5.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[6] != 1:
-                screenCompile.ids.bt_bed_pos6.text = "DN"
-                screenCompile.ids.bt_bed_pos6.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos6.text = "UP"
-                screenCompile.ids.bt_bed_pos6.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[7] != 1:
-                screenCompile.ids.bt_bed_pos7.text = "DN"
-                screenCompile.ids.bt_bed_pos7.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos7.text = "UP"
-                screenCompile.ids.bt_bed_pos7.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[8] != 1:
-                screenCompile.ids.bt_bed_pos8.text = "DN"
-                screenCompile.ids.bt_bed_pos8.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos8.text = "UP"
-                screenCompile.ids.bt_bed_pos8.md_bg_color = "#ee2222"
-
-            if conf_bed_pos_step[9] != 1:
-                screenCompile.ids.bt_bed_pos9.text = "DN"
-                screenCompile.ids.bt_bed_pos9.md_bg_color = "#196BA5"
-            else:
-                screenCompile.ids.bt_bed_pos9.text = "UP"
-                screenCompile.ids.bt_bed_pos9.md_bg_color = "#ee2222"
 
         except Exception as e:
             Logger.error(e)
 
     def regular_highspeed_display(self, dt):
         global flag_mode, flag_run, flag_alarm
-        global val_x_pv, val_y_pv, val_z_pv
-        global val_x_pos, val_y_pos, val_z_pos
-        global conf_x_speed_pv, conf_z_speed_pv, conf_y_speed_pv
-        global conf_x_speed_sv, conf_z_speed_sv, conf_y_speed_sv
-        global conf_bed_pos_pv, conf_bed_pos_sv
-        global sens_clamp_close, sens_y_reducer, sens_y_origin
-        global sens_press_open, sens_table_up, sens_table_down
-        global sens_x_origin, sens_x_reducer, sens_chuck_close
+        global val_j1_pos_pv, val_j2_pos_pv, val_j3_pos_pv
+        global val_x_pos_sv, val_y_pos_sv, val_z_pos_sv
         global flag_seqs_arr, flag_steps_arr
 
         screenOperateManual = self.screen_manager.get_screen('screen_operate_manual')
         screenOperateAuto = self.screen_manager.get_screen('screen_operate_auto')
 
         try:
-            # screenOperateAuto.ids.lb_set_x.text = str(val_x_pos)
-            # screenOperateAuto.ids.lb_set_y.text = str(val_y_pos)
-            # screenOperateAuto.ids.lb_set_z.text = str(val_z_pos)
+            # screenOperateAuto.ids.lb_set_x.text = str(val_x_pos_sv)
+            # screenOperateAuto.ids.lb_set_y.text = str(val_y_pos_sv)
+            # screenOperateAuto.ids.lb_set_z.text = str(val_z_pos_sv)
 
             # screenOperateAuto.ids.lb_real_x.text = str(val_x_pv)
             # screenOperateAuto.ids.lb_real_y.text = str(val_y_pv)
@@ -515,6 +442,13 @@ class ScreenSplash(MDScreen):
             # screenOperateAuto.ids.lb_z_speed.text = str(conf_z_speed_pv)
             # screenOperateAuto.ids.lb_bed_pos.text = "UP" if conf_bed_pos_pv == 1 else "DN"
 
+            screenOperateManual.ids.lb_real_j1.text = f"{val_j1_pos_pv:.2f}"
+            screenOperateManual.ids.lb_real_j2.text = f"{val_j2_pos_pv:.2f}"
+            screenOperateManual.ids.lb_real_j3.text = f"{val_j3_pos_pv:.2f}"
+
+            screenOperateManual.ids.lb_real_x.text = f"{val_x_pos_pv:.2f}"
+            screenOperateManual.ids.lb_real_y.text = f"{val_y_pos_pv:.2f}"
+            screenOperateManual.ids.lb_real_z.text = f"{val_z_pos_pv:.2f}"
 
             if not flag_mode:
                 screenOperateManual.ids.bt_mode.md_bg_color = "#196BA5"
@@ -1185,10 +1119,15 @@ class ScreenOperateManual(MDScreen):
         Clock.schedule_once(self.delayed_init, 5)
 
     def delayed_init(self, dt):
-        global val_x_pos, val_y_pos, val_z_pos
-        self.ids.input_operate_x.text = str(val_x_pos)
-        self.ids.input_operate_y.text = str(val_y_pos)
-        self.ids.input_operate_z.text = str(val_z_pos)
+        self.ids.input_operate_x.text = str(val_x_pos_sv)
+        self.ids.input_operate_y.text = str(val_y_pos_sv)
+        self.ids.input_operate_z.text = str(val_z_pos_sv)
+        self.ids.input_operate_j1.text = str(val_j1_pos_sv)
+        self.ids.input_operate_j2.text = str(val_j2_pos_sv)
+        self.ids.input_operate_j3.text = str(val_j3_pos_sv)
+        self.ids.input_vel_j1.text = str(val_j1_vel)
+        self.ids.input_vel_j2.text = str(val_j2_vel)
+        self.ids.input_vel_j3.text = str(val_j3_vel)        
         self.reload()
 
     def update_view(self, direction):
@@ -1221,7 +1160,7 @@ class ScreenOperateManual(MDScreen):
         global val_x_step
         global val_y_step
         global val_z_step
-        global val_x_pos, val_y_pos, val_z_pos
+        global val_x_pos_sv, val_y_pos_sv, val_z_pos_sv
 
         global data_base_process
         view_camera = elev, azim, roll
@@ -1232,11 +1171,11 @@ class ScreenOperateManual(MDScreen):
             self.ax = self.fig.add_subplot(111, projection='3d')
             self.fig.set_facecolor("#eeeeee")
 
-            bot = SimulatedDeltaBot(servo_link_length, parallel_link_length,
-                                    servo_displacement, effector_displacement)
+            bot = SimulatedDeltaBot(LINK_JOINT_LENGTH, LINK_PARALLEL_LENGTH,
+                                    JOINT_DISPLACEMENT, EFFECTOR_DISPLACEMENT)
             # robot modelling
             # calculate IK for control system, input destined coordinate, output joint angle 
-            ik_result = bot.inverse(val_x_pos ,val_y_pos, val_z_pos)
+            ik_result = bot.inverse(val_x_pos_sv ,val_y_pos_sv, val_z_pos_sv)
             print(ik_result)
 
             servo_angle = np.array([ik_result[0],ik_result[1],ik_result[2]], dtype=int)
@@ -1247,27 +1186,27 @@ class ScreenOperateManual(MDScreen):
             fk_result = bot.forward(*servo_angle)
             print(fk_result)
 
-            base = np.array([[0, -servo_displacement, 0],
-                    [sin120*servo_displacement,-cos120*servo_displacement,0],
-                    [-sin120*servo_displacement,-cos120*servo_displacement,0]])
+            base = np.array([[0, -JOINT_DISPLACEMENT, 0],
+                    [sin120*JOINT_DISPLACEMENT,-cos120*JOINT_DISPLACEMENT,0],
+                    [-sin120*JOINT_DISPLACEMENT,-cos120*JOINT_DISPLACEMENT,0]])
             
-            platform = np.array([[fk_result[0], fk_result[1]-effector_displacement,fk_result[2]],
-                    [fk_result[0]+sin120*effector_displacement,fk_result[1]-cos120*effector_displacement,fk_result[2]],
-                    [fk_result[0]-sin120*effector_displacement,fk_result[1]-cos120*effector_displacement,fk_result[2]]])
+            platform = np.array([[fk_result[0], fk_result[1]-EFFECTOR_DISPLACEMENT,fk_result[2]],
+                    [fk_result[0]+sin120*EFFECTOR_DISPLACEMENT,fk_result[1]-cos120*EFFECTOR_DISPLACEMENT,fk_result[2]],
+                    [fk_result[0]-sin120*EFFECTOR_DISPLACEMENT,fk_result[1]-cos120*EFFECTOR_DISPLACEMENT,fk_result[2]]])
             
-            t = servo_displacement-effector_displacement
+            t = JOINT_DISPLACEMENT-EFFECTOR_DISPLACEMENT
             theta1, theta2, theta3 = maths.radians(servo_angle[0]), maths.radians(servo_angle[1]), maths.radians(servo_angle[2])
             # Calculate position of leg1's joint.  x1 is implicitly zero - along the axis
-            y1 = -(t + servo_link_length*maths.cos(theta1))
-            z1 = -servo_link_length*maths.sin(theta1)
+            y1 = -(t + LINK_JOINT_LENGTH*maths.cos(theta1))
+            z1 = -LINK_JOINT_LENGTH*maths.sin(theta1)
             # Calculate leg2's joint position
-            y2 = (t + servo_link_length*maths.cos(theta2))*maths.sin(maths.pi/6)
+            y2 = (t + LINK_JOINT_LENGTH*maths.cos(theta2))*maths.sin(maths.pi/6)
             x2 = y2*maths.tan(maths.pi/3)
-            z2 = -servo_link_length*maths.sin(theta2)
+            z2 = -LINK_JOINT_LENGTH*maths.sin(theta2)
             # Calculate leg3's joint position
-            y3 = (t + servo_link_length*maths.cos(theta3))*maths.sin(maths.pi/6)
+            y3 = (t + LINK_JOINT_LENGTH*maths.cos(theta3))*maths.sin(maths.pi/6)
             x3 = -y3*maths.tan(maths.pi/3)
-            z3 = -servo_link_length*maths.sin(theta3)
+            z3 = -LINK_JOINT_LENGTH*maths.sin(theta3)
 
             joint = np.array([[0,y1,z1],
                     [x2,y2,z2],
@@ -1293,6 +1232,13 @@ class ScreenOperateManual(MDScreen):
         except:
             toast("error update pipe ying process illustration")
            
+    def sign_int(self, value):
+        value = int(value)
+        if value < 0:
+            return value + (2**16)
+        else:
+            return value
+        
     def exec_mode(self):
         global flag_conn_stat, flag_mode
 
@@ -1436,20 +1382,20 @@ class ScreenOperateManual(MDScreen):
 
     def exec_operate_x(self):
         global flag_conn_stat, flag_operate_req_x
-        global val_x_pos
+        global val_x_pos_sv
         global view_camera
         elev, azim, roll = view_camera
         
         flag_operate_req_x = True
         self.ids.bt_operate_x.md_bg_color = "#ee2222"
-        val_x_pos = float(self.ids.input_operate_x.text)
+        val_x_pos_sv = float(self.ids.input_operate_x.text)
         self.update_graph(elev, azim, roll)
 
         try:
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3075, flag_operate_req_x, slave=1) #M13
-                modbus_client.write_register(1522, int(val_x_pos), slave=1) #V1010
+                modbus_client.write_register(1522, self.sign_int(val_x_pos_sv), slave=1) #V1010
                 modbus_client.close()
         except:
             toast("error send exec_operate_x and val_operate_x data to PLC Slave") 
@@ -1469,21 +1415,21 @@ class ScreenOperateManual(MDScreen):
 
     def exec_operate_y(self):
         global flag_conn_stat, flag_operate_req_y
-        global val_y_pos
+        global val_y_pos_sv
         global view_camera
         elev, azim, roll = view_camera
 
         flag_operate_req_y = True
         self.ids.bt_operate_y.md_bg_color = "#ee2222"
-        val_y_pos = float(self.ids.input_operate_y.text)
+        val_y_pos_sv = float(self.ids.input_operate_y.text)
         self.update_graph(elev, azim, roll)
 
         try:
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3085, flag_operate_req_y, slave=1) #M23
-                modbus_client.write_register(1622, int(val_y_pos), slave=1) #V1110
-                modbus_client.write_register(1622, int(val_y_pos), slave=1) #V1110
+                modbus_client.write_register(1622, self.sign_int(val_y_pos_sv), slave=1) #V1110
+                modbus_client.write_register(1622, self.sign_int(val_y_pos_sv), slave=1) #V1110
                 modbus_client.close()
         except:
             toast("error send exec_operate_y and val_operate_y data to PLC Slave") 
@@ -1503,20 +1449,20 @@ class ScreenOperateManual(MDScreen):
 
     def exec_operate_z(self):
         global flag_conn_stat, flag_operate_req_z
-        global val_z_pos
+        global val_z_pos_sv
         global view_camera
         elev, azim, roll = view_camera
 
         flag_operate_req_z = True
         self.ids.bt_operate_z.md_bg_color = "#ee2222"
-        val_z_pos = float(self.ids.input_operate_z.text)
+        val_z_pos_sv = float(self.ids.input_operate_z.text)
         self.update_graph(elev, azim, roll)
 
         try:
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3101, flag_operate_req_z, slave=1) #M29
-                modbus_client.write_register(3573, int(val_z_pos), slave=1) #V3061
+                modbus_client.write_register(3573, self.sign_int(val_z_pos_sv), slave=1) #V3061
                 modbus_client.close()
         except:
             toast("error send exec_operate_z and val_operate_z data to PLC Slave")
@@ -1535,14 +1481,14 @@ class ScreenOperateManual(MDScreen):
             toast("error send end_operate_z data to PLC Slave")
 
     def update_cartesian(self):
-        global val_x_pos, val_y_pos, val_z_pos
+        global val_x_pos_sv, val_y_pos_sv, val_z_pos_sv
         global view_camera
         elev, azim, roll = view_camera
         
         try:
-            val_x_pos = float(self.ids.input_operate_x.text) if self.ids.input_operate_x.text != "" else 0
-            val_y_pos = float(self.ids.input_operate_y.text) if self.ids.input_operate_y.text != "" else 0
-            val_z_pos = float(self.ids.input_operate_z.text) if self.ids.input_operate_z.text != "" else 0
+            val_x_pos_sv = float(self.ids.input_operate_x.text) if self.ids.input_operate_x.text != "" else 0
+            val_y_pos_sv = float(self.ids.input_operate_y.text) if self.ids.input_operate_y.text != "" else 0
+            val_z_pos_sv = float(self.ids.input_operate_z.text) if self.ids.input_operate_z.text != "" else 0
             self.update_graph(elev, azim, roll)
         except:
             toast("error supdate coordinate data")
@@ -1550,6 +1496,7 @@ class ScreenOperateManual(MDScreen):
     def end_jog_joint(self):
         global flag_conn_stat
         try:
+            
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3083, False, slave=1) #M11
@@ -1567,8 +1514,11 @@ class ScreenOperateManual(MDScreen):
         flag_jog_req_j1 = True
         self.ids.bt_jog_j1_p.md_bg_color = "#ee2222"
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
+                modbus_client.write_register(1622, self.sign_int(16000), slave=1) #V1110
                 modbus_client.write_coil(3083, True, slave=1) #M11
                 modbus_client.close()
         except:
@@ -1579,8 +1529,11 @@ class ScreenOperateManual(MDScreen):
         flag_jog_req_j1 = True
         self.ids.bt_jog_j1_n.md_bg_color = "#ee2222"
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
+                modbus_client.write_register(1622, self.sign_int(-16000), slave=1) #V1110
                 modbus_client.write_coil(3084, True, slave=1) #M12
                 modbus_client.close()
         except:
@@ -1598,9 +1551,12 @@ class ScreenOperateManual(MDScreen):
         flag_jog_req_j2 = True
         self.ids.bt_jog_j2_p.md_bg_color = "#ee2222"
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
-                modbus_client.write_coil(3093, True, slave=1) #M231
+                modbus_client.write_register(1722, self.sign_int(16000), slave=1) #V1210
+                modbus_client.write_coil(3093, True, slave=1) #M21
                 modbus_client.close()
         except:
             toast("error send exec_jog_y_p data to PLC Slave")  
@@ -1610,8 +1566,11 @@ class ScreenOperateManual(MDScreen):
         flag_jog_req_j2 = True
         self.ids.bt_jog_j2_n.md_bg_color = "#ee2222"
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
+                modbus_client.write_register(1722, self.sign_int(-16000), slave=1) #V1110
                 modbus_client.write_coil(3094, True, slave=1) #M22
                 modbus_client.close()
         except:
@@ -1629,8 +1588,11 @@ class ScreenOperateManual(MDScreen):
         flag_jog_req_j3 = True
         self.ids.bt_jog_j3_p.md_bg_color = "#ee2222"
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
+                modbus_client.write_register(1822, self.sign_int(16000), slave=1) #V1310
                 modbus_client.write_coil(3103, True, slave=1) #M31
                 modbus_client.close()
         except:
@@ -1641,8 +1603,11 @@ class ScreenOperateManual(MDScreen):
         flag_jog_req_j3 = True
         self.ids.bt_jog_j3_n.md_bg_color = "#ee2222"
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
+                modbus_client.write_register(1822, self.sign_int(-16000), slave=1) #V1310
                 modbus_client.write_coil(3104, True, slave=1) #M32
                 modbus_client.close()
         except:
@@ -1657,20 +1622,21 @@ class ScreenOperateManual(MDScreen):
 
     def exec_operate_j1(self):
         global flag_conn_stat, flag_operate_req_j1
-        global val_j1_pos
+        global val_j1_pos_sv, val_j1_vel
         global view_camera
         elev, azim, roll = view_camera
         
         flag_operate_req_j1 = True
         self.ids.bt_operate_j1.md_bg_color = "#ee2222"
-        val_j1_pos = float(self.ids.input_operate_j1.text)
+        val_j1_pos_sv = float(self.ids.input_operate_j1.text)
         self.update_graph(elev, azim, roll)
 
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3085, flag_operate_req_j1, slave=1) #M13
-                modbus_client.write_register(1622, int(val_j1_pos), slave=1) #V1110
                 modbus_client.close()
         except:
             toast("error send exec_operate_j1 and val_operate_j1 data to PLC Slave") 
@@ -1690,20 +1656,21 @@ class ScreenOperateManual(MDScreen):
 
     def exec_operate_j2(self):
         global flag_conn_stat, flag_operate_req_j2
-        global val_j2_pos
+        global val_j2_pos_sv, val_j2_vel
         global view_camera
         elev, azim, roll = view_camera
 
         flag_operate_req_j2 = True
         self.ids.bt_operate_j2.md_bg_color = "#ee2222"
-        val_j2_pos = float(self.ids.input_operate_j2.text)
+        val_j2_pos_sv = float(self.ids.input_operate_j2.text)
         self.update_graph(elev, azim, roll)
 
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()            
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3095, flag_operate_req_j2, slave=1) #M23
-                modbus_client.write_register(1722, int(val_j2_pos), slave=1) #V1210
                 modbus_client.close()
         except:
             toast("error send exec_operate_j2 and val_operate_j2 data to PLC Slave") 
@@ -1723,20 +1690,21 @@ class ScreenOperateManual(MDScreen):
 
     def exec_operate_j3(self):
         global flag_conn_stat, flag_operate_req_j3
-        global val_j3_sv
+        global val_j3_pos_sv, val_j3_vel
         global view_camera
         elev, azim, roll = view_camera
 
         flag_operate_req_j3 = True
         self.ids.bt_operate_j3.md_bg_color = "#ee2222"
-        val_j3_pos = float(self.ids.input_operate_j3.text)
+        val_j3_pos_sv = float(self.ids.input_operate_j3.text)
         self.update_graph(elev, azim, roll)
 
         try:
+            self.update_joint_pos()
+            self.update_joint_vel()
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3105, flag_operate_req_j3, slave=1) #M33
-                modbus_client.write_register(1822, int(val_j3_pos), slave=1) #V1310
                 modbus_client.close()
         except:
             toast("error send exec_operate_j3 and val_operate_j3 data to PLC Slave")
@@ -1754,22 +1722,71 @@ class ScreenOperateManual(MDScreen):
         except:
             toast("error send end_operate_j3 data to PLC Slave")
 
-    def update_joint(self):
-        global val_j1_pos, val_j2_pos, val_j3_pos
+    def update_joint_pos(self):
+        global val_j1_pos_sv, val_j2_pos_sv, val_j3_pos_sv
+        global val_j1_pos_pv, val_j2_pos_pv, val_j3_pos_pv
+        global val_x_pos_pv, val_y_pos_pv, val_z_pos_pv
         global view_camera
         elev, azim, roll = view_camera
         
         try:
-            val_j1_pos = float(self.ids.input_operate_j1.text) if self.ids.input_operate_j1.text != "" else 0
-            val_j2_pos = float(self.ids.input_operate_j2.text) if self.ids.input_operate_j2.text != "" else 0
-            val_j3_pos = float(self.ids.input_operate_j3.text) if self.ids.input_operate_j3.text != "" else 0
+            val_j1_pos_sv = float(self.ids.input_operate_j1.text) if self.ids.input_operate_j1.text != "" else 0
+            val_j2_pos_sv = float(self.ids.input_operate_j2.text) if self.ids.input_operate_j2.text != "" else 0
+            val_j3_pos_sv = float(self.ids.input_operate_j3.text) if self.ids.input_operate_j3.text != "" else 0
+
+            val_j1_pulse = (val_j1_pos_sv - val_j1_pos_pv) * PULSE_PER_REV * GEAR_RATIO / 360
+            val_j2_pulse = (val_j2_pos_sv - val_j2_pos_pv) * PULSE_PER_REV * GEAR_RATIO / 360
+            val_j3_pulse = (val_j3_pos_sv - val_j3_pos_pv) * PULSE_PER_REV * GEAR_RATIO / 360
+
+            bot = SimulatedDeltaBot(LINK_JOINT_LENGTH, LINK_PARALLEL_LENGTH,
+                                    JOINT_DISPLACEMENT, EFFECTOR_DISPLACEMENT)
+            servo_angle = np.array([val_j1_pos_pv, val_j2_pos_pv, val_j3_pos_pv], dtype=int)
+
+            fk_result = bot.forward(*servo_angle)
+            
+            val_x_pos_pv = fk_result[0]
+            val_y_pos_pv = fk_result[1]
+            val_z_pos_pv = fk_result[2]
+
+            if flag_conn_stat:
+                modbus_client.connect()
+                modbus_client.write_register(1622, self.sign_int(val_j1_pulse), slave=1) #V1110
+                modbus_client.write_register(1722, self.sign_int(val_j2_pulse), slave=1) #V1210
+                modbus_client.write_register(1822, self.sign_int(val_j3_pulse), slave=1) #V1310
+                modbus_client.close()
+
             self.update_graph(elev, azim, roll)
         except:
-            toast("error supdate coordinate data")
+            toast("error update joint angle data")
+
+    def update_joint_vel(self):
+        global val_j1_vel, val_j2_vel, val_j3_vel
+        global view_camera
+        elev, azim, roll = view_camera
+        
+        try:
+            val_j1_vel = float(self.ids.input_vel_j1.text) if self.ids.input_vel_j1.text != "" else 0
+            val_j2_vel = float(self.ids.input_vel_j2.text) if self.ids.input_vel_j2.text != "" else 0
+            val_j3_vel = float(self.ids.input_vel_j3.text) if self.ids.input_vel_j3.text != "" else 0
+
+            val_j1_pvel = val_j1_vel * PULSE_PER_REV * GEAR_RATIO / 360 
+            val_j2_pvel = val_j1_vel * PULSE_PER_REV * GEAR_RATIO / 360
+            val_j3_pvel = val_j1_vel * PULSE_PER_REV * GEAR_RATIO / 360
+            
+            if flag_conn_stat:
+                modbus_client.connect()
+                modbus_client.write_register(1612, self.sign_int(val_j1_pvel), slave=1) #V1100
+                modbus_client.write_register(1712, self.sign_int(val_j2_pvel), slave=1) #V1200
+                modbus_client.write_register(1812, self.sign_int(val_j3_pvel), slave=1) #V1300
+                modbus_client.close()
+
+            self.update_graph(elev, azim, roll)         
+        except:
+            toast("error supdate joint velocity data")
 
     def exec_origin(self):
         global flag_conn_stat, flag_origin_req
-        global val_x_pos, val_y_pos, val_z_pos
+        global val_x_pos_sv, val_y_pos_sv, val_z_pos_sv
         global view_camera
         elev, azim, roll = view_camera
 
@@ -1777,19 +1794,19 @@ class ScreenOperateManual(MDScreen):
         self.ids.bt_origin.md_bg_color = "#ee2222"
 
         try:
-            val_x_pos = 0.
-            val_y_pos = 0.
-            val_z_pos = -200.
+            val_x_pos_sv = 0.
+            val_y_pos_sv = 0.
+            val_z_pos_sv = -200.
 
-            self.ids.input_operate_x.text = str(val_x_pos)
-            self.ids.input_operate_y.text = str(val_y_pos)
-            self.ids.input_operate_z.text = str(val_z_pos)
+            self.ids.input_operate_x.text = str(val_x_pos_sv)
+            self.ids.input_operate_y.text = str(val_y_pos_sv)
+            self.ids.input_operate_z.text = str(val_z_pos_sv)
 
             self.update_graph(elev, azim, roll)
 
             if flag_conn_stat:
                 modbus_client.connect()
-                modbus_client.write_coil(3102, flag_origin_req, slave=1) #M30
+                modbus_client.write_coil(3074, flag_origin_req, slave=1) #M2
                 modbus_client.close()
         except:
             toast("error send flag_origin_req data to PLC Slave")
@@ -1802,17 +1819,31 @@ class ScreenOperateManual(MDScreen):
         try:
             if flag_conn_stat:
                 modbus_client.connect()
-                modbus_client.write_coil(3102, flag_origin_req, slave=1) #M30
+                modbus_client.write_coil(3074, flag_origin_req, slave=1) #M2
                 modbus_client.close()
         except:
             toast("error send flag_origin_req data to PLC Slave")
 
     def exec_reset(self):
         global flag_conn_stat, flag_reset
+        global val_x_pos_sv, val_y_pos_sv, val_z_pos_sv
+        global view_camera
+        elev, azim, roll = view_camera
+        
         flag_reset = True
         self.ids.bt_reset.md_bg_color = "#ee2222"
 
         try:
+            val_x_pos_sv = 0.
+            val_y_pos_sv = 0.
+            val_z_pos_sv = -200.
+
+            self.ids.input_operate_x.text = str(val_x_pos_sv)
+            self.ids.input_operate_y.text = str(val_y_pos_sv)
+            self.ids.input_operate_z.text = str(val_z_pos_sv)
+
+            self.update_graph(elev, azim, roll)
+
             if flag_conn_stat:
                 modbus_client.connect()
                 modbus_client.write_coil(3075, flag_reset, slave=1) #M3
