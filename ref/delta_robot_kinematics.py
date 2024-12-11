@@ -15,6 +15,7 @@ link anchor to the centre of the triangle, which is easier to measure.
 import math as maths
 import matplotlib.pyplot as plt
 import numpy as np
+import mpl_toolkits.mplot3d.art3d as art3d
 
 class DeltaPositionError(Exception):
     pass
@@ -146,6 +147,9 @@ if __name__ == '__main__':
     cos120 = maths.cos(2.0*maths.pi/3.0)
     sin120 = maths.sin(2.0*maths.pi/3.0)
 
+    cos30 = maths.cos(maths.pi/6.0)
+    sin30 = maths.sin(maths.pi/6.0)
+
     fk_result = bot.forward(*servo_angle)
     print(fk_result)
 
@@ -180,35 +184,46 @@ if __name__ == '__main__':
     ax = fig.add_subplot(1,1,1, projection='3d')
     ax.scatter(xs=[x for x,y,z in base] ,ys=[y for x,y,z in base],zs=[z for x,y,z in base])
     ax.scatter(xs=[x for x,y,z in platform] ,ys=[y for x,y,z in platform],zs=[z for x,y,z in platform])
-    
+    p = plt.Circle((0, 0), servo_displacement)
+    pf = plt.Circle((fk_result[0], fk_result[1]), effector_displacement)
+    ax.add_patch(p)
+    ax.add_patch(pf)
+    art3d.pathpatch_2d_to_3d(p, z=0, zdir="z")
+    art3d.pathpatch_2d_to_3d(pf, z=fk_result[2], zdir="z")
+
     for i in range(3):
         ax.plot([base.T[0,i] ,joint.T[0,i]],[base.T[1,i],joint.T[1,i]],[base.T[2,i],joint.T[2,i]])
     for i in range(3):
         ax.plot([joint.T[0,i] ,platform.T[0,i]],[joint.T[1,i],platform.T[1,i]],[joint.T[2,i],platform.T[2,i]])
-    plt.show()
-
-
-    # # calculate FK for workspace simulation, input joint angle, output end-effector coordinate 
-    # step = 5
-    # minServo = -30
-    # maxServo = 70
-
-    # points = []
-    # for t1 in range(minServo, maxServo, step):
-    #     for t2 in range(minServo, maxServo, step):
-    #         for t3 in range(minServo, maxServo, step):
-    #             servos = (t1, t2, t3)
-    #             points.append(bot.forward(*servos))
-    #             there_and_back = bot.inverse(*bot.forward(*servos))
-    #             err = map(lambda a,b: abs(a-b), servos, there_and_back)
-    #             if max(err) > 0.0000000000001:
-    #                 print(servos, there_and_back, err)
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(1,1,1, projection='3d')
-    # surf = ax.scatter(xs=[x for x,y,z in points] ,ys=[y for x,y,z in points],zs=[z for x,y,z in points])
-
+    ax.set_xlim([-800, 800])
+    ax.set_ylim([-800, 800])
+    ax.set_zlim([-1400, 0])        
     # plt.show()
+
+
+    # calculate FK for workspace simulation, input joint angle, output end-effector coordinate 
+    step = 5
+    minServo = 0
+    maxServo = 70
+
+    points = []
+    for t1 in range(minServo, maxServo, step):
+        for t2 in range(minServo, maxServo, step):
+            for t3 in range(minServo, maxServo, step):
+                servos = (t1, t2, t3)
+                points.append(bot.forward(*servos))
+                there_and_back = bot.inverse(*bot.forward(*servos))
+                err = map(lambda a,b: abs(a-b), servos, there_and_back)
+                if max(err) > 0.0000000000001:
+                    print(servos, there_and_back, err)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1,1,1, projection='3d')
+    surf = ax.scatter(xs=[x for x,y,z in points] ,ys=[y for x,y,z in points],zs=[z for x,y,z in points])
+    ax.set_xlim([-800, 800])
+    ax.set_ylim([-800, 800])
+    ax.set_zlim([-1400, 0])  
+    plt.show()
 
     # # # simulate trajectory when motor speed is constant
     # base = np.array([[0, -servo_displacement, 0],

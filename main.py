@@ -1,3 +1,4 @@
+from tkinter import E
 from kivy.clock import Clock
 from kivy.lang import Builder
 from kivy.config import Config
@@ -14,6 +15,7 @@ from pymodbus.client import ModbusTcpClient
 from pymodbus.client import AsyncModbusTcpClient
 from datetime import datetime
 import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d.art3d as art3d
 import math as maths
 import numpy as np
 import time
@@ -1219,7 +1221,13 @@ class ScreenOperateManual(MDScreen):
                 self.ax.plot([base.T[0,i] ,joint.T[0,i]],[base.T[1,i],joint.T[1,i]],[base.T[2,i],joint.T[2,i]])
             for i in range(3):
                 self.ax.plot([joint.T[0,i] ,platform.T[0,i]],[joint.T[1,i],platform.T[1,i]],[joint.T[2,i],platform.T[2,i]])            
-            
+            p = plt.Circle((0, 0), JOINT_DISPLACEMENT)
+            pf = plt.Circle((fk_result[0], fk_result[1]), EFFECTOR_DISPLACEMENT)
+            self.ax.add_patch(p)
+            self.ax.add_patch(pf)
+            art3d.pathpatch_2d_to_3d(p, z=0, zdir="z")
+            art3d.pathpatch_2d_to_3d(pf, z=fk_result[2], zdir="z")
+
             self.ax.set_box_aspect(aspect=(1, 1, 1))
             # self.ax.set_aspect('equal')
 
