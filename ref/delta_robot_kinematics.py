@@ -139,7 +139,7 @@ if __name__ == '__main__':
 
     # robot modelling
     # calculate IK for control system, input destined coordinate, output joint angle 
-    ik_result = bot.inverse(0.0 ,500.0, -500.0)
+    ik_result = bot.inverse(0.0 , 0.0, -600.0)
     print(ik_result)
 
     servo_angle = np.array([ik_result[0],ik_result[1],ik_result[2]], dtype=int)

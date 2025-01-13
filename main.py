@@ -672,7 +672,7 @@ class ScreenPipeSetting(MDScreen):
         view_camera = np.array([elev, azim, roll])        
         self.update_graph(elev, azim, roll)
 
-    def update_graph(self, elev=45, azim=60, roll=0):
+    def update_graph(self, elev = view_camera[0], azim = view_camera[1], roll = view_camera[2]):
         global val_pipe_length
         global val_pipe_diameter
         global val_pipe_thickness
@@ -1158,7 +1158,7 @@ class ScreenOperateManual(MDScreen):
         
         self.update_graph()
             
-    def update_graph(self, elev=45, azim=60, roll=0):
+    def update_graph(self, elev = view_camera[0], azim = view_camera[1], roll = view_camera[2]):
         global val_x_step
         global val_y_step
         global val_z_step
@@ -2049,7 +2049,7 @@ class ScreenOperateAuto(MDScreen):
         except Exception as e:
             toast(e) 
             
-    def update_graph(self, elev=45, azim=60, roll=0):
+    def update_graph(self, elev = view_camera[0], azim = view_camera[1], roll = view_camera[2]):
         global val_pipe_length
         global val_pipe_diameter
         global val_pipe_thickness
@@ -2597,7 +2597,7 @@ class ScreenCompile(MDScreen):
                 else:
                     conf_bed_pos_step[i] = 1
 
-    def update_graph(self, elev=45, azim=60, roll=0):
+    def update_graph(self, elev = view_camera[0], azim = view_camera[1], roll = view_camera[2]):
         global val_pipe_length
         global val_pipe_diameter
         global val_pipe_thickness
